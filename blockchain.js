@@ -7,8 +7,8 @@ class Block{
        this.previoushash = previoushash;
        this.timestamp = timestamp;
        this.data = data;
-    }
-}
+    };
+};
 
 
 const Genesisblock = new Block(
@@ -25,24 +25,39 @@ console.log(blockchain); // output
 
 
 const getLastBlock = () => blockchain[blockchain.length - 1]; // function getLastBlock(){return blockchain[blockchain.length - 1]};
-const getTimestamp = () => new Date().getTime() / 1000;
-const createHash = (index, previoushash, timestamp, data) => CryptoJS.SHA256(index + previoushash + timestamp + data).toString(); // createHash toString
+const getTimestamp = () => new Date().getTime();
+const createHash = (index, previoushash, timestamp, data) =>
+CryptoJS.SHA256(
+    index + previoushash + timestamp + JSON.stringify(data)
+).toString(); // createHash toString
+const getBlockchain = () => blockchain;
 
-
-const createnewBlock = data => {
+const createNewBlock = data => {
     const previousBlock = getLastBlock();
     const newBlockIndex = previousBlock.index + 1;
     const newTimestamp = getTimestamp();
-
-    const nesHash = createHash(newBlockIndex, previousBlock.hash, newTimestamp, data);
-    const newBlock = new Block(newBlockIndex, newHash, previousBlock.Hash, newTimestamp, data);
+    const newHash = createHash(
+        newBlockIndex,
+        previousBlock.hash,
+        newTimestamp,
+        data
+    );
+    const newBlock = new Block(
+        newBlockIndex,
+        newHash,
+        previousBlock.hash,
+        newTimestamp,
+        data
+    );
+    
+    addBlockToChain(newBlock);
     return newBlock;
 };
 
-const getBlocksHash = (block) => createHash(block.index, block.previoushash, block.timestamp, block.JSON.stringify(data)); // checking hash same things, JSON all data
+const getBlocksHash = block => createHash(block.index, block.previoushash, block.timestamp, block.data); // checking hash same things, JSON all data
 
-const isNewBlockValid = (candidateBlock, latestBlock) => {
-    if(!isNewStructureValid(candidateBlock)){
+const isBlockValid = (candidateBlock, latestBlock) => {
+    if(!isBlockStructureValid(candidateBlock)){
         console.log("The candidate block structure is not valid");
         return false;
     }else if(latestBlock.index + 1 !== candidateBlock.index){
@@ -58,13 +73,13 @@ const isNewBlockValid = (candidateBlock, latestBlock) => {
     return true;
 };
 
-const isNewStructureValid = (block) => {
+const isBlockStructureValid = (block) => {
     return(
-        typeof block.index === 'number' &&
-        typeof block.hash === 'string' &&
-        typeof block.previoushash === 'string' &&
-        typeof block.timestamp === 'number ' &&
-        typeof block.data === 'string'
+        typeof block.index === "number" &&
+        typeof block.hash === "string" &&
+        typeof block.previoushash === "string" &&
+        typeof block.timestamp === "number" &&
+        typeof block.data === "string"
     );
 };
 
@@ -72,14 +87,41 @@ const isChainValid = (candidateChain) => {
     const isGenesisValid = block => {
         return JSON.stringify(block) === JSON.stringify(Genesisblock);
     };
-    if(!isGenesisValid(candidateChian[0])){
+    if(!isGenesisValid(candidateChain[0])){
         console.log("The candidateChains's GenesisBlock is not the same as out GenesisBlock");
         return false;
     }
     for(let i=1; i < candidateChain.length; i++){
-        if(!isNewBlockValid(candidateChain[i], candidateChain[i-1])){
+        if(!isBlockValid(candidateChain[i], candidateChain[i-1])){
             return false;
         }
     }
     return true;
+};
+
+// check length
+const replaceChain = candidateChain => {
+    if(isChainValid(candidateChain) &&
+    candidateChain.length > getBlockchain().length
+    ){
+        blockchain = candidateChain;
+        return true;
+    }else {
+        return false;
+    }
+};
+
+const addBlockToChain = candidateBlock => {
+    if(isBlockValid(candidateBlock, getLastBlock())){
+        getBlockchain().push(candidateBlock);
+        return true;
+    }else{
+        return false;
+    }
+};
+
+
+module.exports = {
+    getBlockchain,
+    createNewBlock,
 };
