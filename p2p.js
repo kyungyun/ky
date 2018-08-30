@@ -2,7 +2,13 @@ const WebSockets = require("ws"),
     Blockchain = require("./blockchain");
 
 
-const { getNewestBlock, isBlockStructureValid, replaceChain, getBlockchain } = Blockchain;
+const {
+    getNewestBlock,
+    isBlockStructureValid,
+    replaceChain,
+    getBlockchain,
+    addBlockToChain
+} = Blockchain;
 
 const sockets = [];
 
@@ -103,13 +109,15 @@ const handleBlockchainResponse = receivedBlocks => {
         console.log("The block structure of the block received is not valid");
         return;
     };
-    const newestBlock = getNewestBlock();
+    const newestBlock = getNewestBlock(); //get LastBlock
     if(latestBlockReceived.index > newestBlock.index) {
         if(newestBlock.hash === latestBlockReceived.previoushash) {
-            addBlockToChain(latestBlockReceived);
-        }else if(receivedBlocks.length === 1) {
+            if(addBlockToChain(latestBlockReceived)){
+                broadcastNewBlock();
+            }
+        } else if (receivedBlocks.length === 1) {
             sendMessageToAll(getAll());
-        }else{
+        } else {
             replaceChain(receivedBlocks);
         }
     }
@@ -123,6 +131,8 @@ const sendMessageToAll = message =>
 const responseLatest = () => blockchainResponse([getNewestBlock()]);
 
 const responseAll = () => blockchainResponse(getBlockchain());
+
+const broadcastNewBlock = () => sendMessageToAll(responseLatest());
 
 const handleSocketError = ws => {
     const closeSocketConnection = ws => {
@@ -142,5 +152,6 @@ const connectToPeers = newPeer => {
 
 module.exports = {
     startP2PServer,
-    connectToPeers
+    connectToPeers,
+    broadcastNewBlock
 };

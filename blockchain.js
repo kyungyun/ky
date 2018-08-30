@@ -26,7 +26,8 @@ console.log(blockchain); // output
 
 const getNewestBlock = () => blockchain[blockchain.length - 1]; // function getNewestBlock(){return blockchain[blockchain.length - 1]};
 
-const getTimestamp = () => new Date().getTime();
+const getTimestamp = () => new Date().toLocaleString();//.getTime();
+
 const createHash = (index, previoushash, timestamp, data) =>
     CryptoJS.SHA256(
         index + previoushash + timestamp + JSON.stringify(data)).toString(); // createHash toString
@@ -51,6 +52,7 @@ const createNewBlock = data => {
     );
     
     addBlockToChain(newBlock);
+    require("./p2p").broadcastNewBlock();
     return newBlock;
 };
 
@@ -79,7 +81,7 @@ const isBlockStructureValid = (block) => {
         typeof block.index === "number" &&
         typeof block.hash === "string" &&
         typeof block.previoushash === "string" &&
-        typeof block.timestamp === "number" &&
+        typeof block.timestamp === "string" &&
         typeof block.data === "string"
     );
 };
